@@ -76,3 +76,5 @@ movies['grossMillions'] = movies['grossMillions'].map(lambda x: x.lstrip('$').rs
 
 # convert grossMillions to numeric (float) and transform dashes into NaN values
 movies['grossMillions'] = pandas.to_numeric(movies['grossMillions'], errors='coerce')
+
+movies.to_csv('movies.csv')
