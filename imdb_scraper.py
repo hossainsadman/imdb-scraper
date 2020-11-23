@@ -1,16 +1,15 @@
+import numpy
+import pandas
 import requests
 from bs4 import BeautifulSoup as bsoup
-import pandas
-import numpy as np
+from time import sleep
+from random import randint
 
-# url of imbd top 1000 movies
-URL = "https://www.imdb.com/search/title/?groups=top_1000&ref_=adv_prv"
-headers = {"Accept-Language": "en-US, en;q=0.5"}
-results = requests.get(URL, headers=headers)
+# start and end of urls for imbd top 1000 movies site
+URL_START = "https://www.imdb.com/search/title/?groups=top_1000&start="
+URL_END = "&ref_=adv_nxt"
 
-soup = bsoup(results.text, "html.parser")
-
-# data of each movie
+# data for each movie
 titles = []
 years = []
 runtimes = []
@@ -19,42 +18,51 @@ metascores = []
 votes = []
 grosses = []
 
-# find all divs containing data for each movie
-movie_divs = soup.find_all('div', class_='lister-item mode-advanced')
+headers = {"Accept-Language": "en-US, en;q=0.5"}
+pages = numpy.arange(1,1001,50)
+for page in pages:
+    cur_page = requests.get(URL_START + str(page) + URL_END, headers = headers)
 
-for div in movie_divs:
-    name = div.h3.a.text
-    titles.append(name)
+    soup = bsoup(cur_page.text, "html.parser")
+    # find all divs containing data for each movie
+    movie_divs = soup.find_all('div', class_='lister-item mode-advanced')
 
-    year = div.h3.find('span', class_='lister-item-year').text
-    years.append(year)
+    for div in movie_divs:
+        name = div.h3.a.text
+        titles.append(name)
 
-    runtime = div.p.find('span', class_='runtime').text
-    runtimes.append(runtime)
+        year = div.h3.find('span', class_='lister-item-year').text
+        years.append(year)
 
-    rating = float(div.strong.text)
-    ratings.append(rating)
+        runtime = div.p.find('span', class_='runtime').text
+        runtimes.append(runtime)
 
-    score = div.find('span', class_='metascore').text if div.find('span', class_='metascore') else '-'
-    metascores.append(score)
+        rating = float(div.strong.text)
+        ratings.append(rating)
 
-    # nv contains the class for both the votes and gross (if it is present) <span> tags
-    nv = div.find_all('span', attrs={'name': 'nv'})
+        score = div.find('span', class_='metascore').text if div.find('span', class_='metascore') else '-'
+        metascores.append(score)
 
-    vote = nv[0].text
-    votes.append(vote)
+        # nv contains the class for both the votes and gross (if it is present) <span> tags
+        nv = div.find_all('span', attrs={'name': 'nv'})
 
-    gross = nv[1].text if len(nv) > 1 else '-'
-    grosses.append(gross)
+        vote = nv[0].text
+        votes.append(vote)
+
+        gross = nv[1].text if len(nv) > 1 else '-'
+        grosses.append(gross)
+
+    # slow down crawling of imbd site to avoid disrupting website activity
+    sleep(randint(2,8))
 
 movies = pandas.DataFrame({
     'movie': titles,
     'year': years,
-    'runtime': runtime,
+    'runtime': runtimes,
     'imdb': ratings,
     'metascore': metascores,
     'votes': votes,
-    'grossMillions': gross,
+    'grossMillions': grosses,
 })
 
 # CLEANING DATA
