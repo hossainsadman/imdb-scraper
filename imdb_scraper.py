@@ -65,8 +65,8 @@ movies['year'] = movies['year'].str.extract('(\d+)').astype(int)
 # remove ' min' from runtime and cast string to int
 movies['runtime'] = movies['runtime'].str.extract('(\d+)').astype(int)
 
-# cast metascore strings to int
-movies['metascore'] = movies['metascore'].astype(int)
+# convert grossMillions to numeric (int) and transform dashes into NaN values
+movies['metascore'] = pandas.to_numeric(movies['metascore'], errors='coerce')
 
 # remove commas from votes and cast string to int
 movies['votes'] = movies['votes'].str.replace(',', '').astype(int)
@@ -74,5 +74,5 @@ movies['votes'] = movies['votes'].str.replace(',', '').astype(int)
 # remove '$' and 'M' from grossMillions and cast string to int
 movies['grossMillions'] = movies['grossMillions'].map(lambda x: x.lstrip('$').rstrip('M'))
 
-# convert grossMillions to float and transform dashes into NaN values
+# convert grossMillions to numeric (float) and transform dashes into NaN values
 movies['grossMillions'] = pandas.to_numeric(movies['grossMillions'], errors='coerce')
